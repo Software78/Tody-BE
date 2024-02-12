@@ -32,9 +32,9 @@ def apiOverview(request):
 
 
 @api_view(['GET'])
-# @authentication_class([JWTAuthentication])
 def taskList(request):
-    tasks = Task.objects.all().order_by('-id')
+    userId = request.user.id
+    tasks = Task.objects.all().order_by('-id').filter(userId=userId)
     serializer = TaskSerializer(tasks, many=True)
     res = { 'status' : status.HTTP_200_OK,'message' : 'success',   'data' : serializer.data }
     return Response(res, status = status.HTTP_200_OK)
@@ -48,10 +48,12 @@ def taskDetail(request,pk):
 
 @api_view(['POST'])
 def taskCreate(request):
+    request.data['userId'] = request.user.id
     serializer = TaskSerializer(data=request.data)
+    print(serializer)
     if serializer.is_valid():
         serializer.save()
-        res = { 'status' : status.HTTP_201_CREATED,'message' : 'success', 'data' : serializer.data }
+    res = { 'status' : status.HTTP_201_CREATED,'message' : 'success', 'data' : serializer.data }
     return Response(res, status = status.HTTP_201_CREATED)
 
 @api_view(['POST'])
@@ -67,7 +69,8 @@ def taskUpdate(request,pk):
 def taskDelete(request,pk):
     task = Task.objects.get(id=pk)
     task.delete()
-    return Response("Item successfully deleted", status= 200)
+    res = { 'status' : status.HTTP_200_OK,'message' : 'success' }
+    return Response(res, status= 200)
 
 class SignupAPIView(APIView):
     permission_classes = [ AllowAny]
